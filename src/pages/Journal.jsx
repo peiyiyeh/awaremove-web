@@ -85,11 +85,11 @@ function Journal() {
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => fileInputRef.current?.click()} style={{ padding: '8px', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', color: 'var(--text-secondary)' }} title="匯入紀錄">
-            <Upload size={20} />
+            <Download size={20} />
           </button>
           <input type="file" accept=".json" ref={fileInputRef} onChange={importJournal} style={{ display: 'none' }} />
           <button onClick={exportJournal} style={{ padding: '8px', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', color: 'var(--text-secondary)' }} title="匯出紀錄">
-            <Download size={20} />
+            <Upload size={20} />
           </button>
         </div>
       </header>

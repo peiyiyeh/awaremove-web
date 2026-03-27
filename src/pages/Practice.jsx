@@ -190,7 +190,7 @@ function Practice() {
               style={{ padding: '8px', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', color: 'var(--text-secondary)' }}
               title="匯入練習內容"
             >
-              <Upload size={20} />
+              <Download size={20} />
             </button>
             <input 
               type="file" 
@@ -204,7 +204,7 @@ function Practice() {
               style={{ padding: '8px', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', color: 'var(--text-secondary)' }}
               title="匯出練習內容"
             >
-              <Download size={20} />
+              <Upload size={20} />
             </button>
           </div>
         </header>
