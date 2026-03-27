@@ -12,6 +12,10 @@ function Home() {
       <header style={{ marginTop: '20px' }}>
         <h1 style={{ fontSize: '1.8rem', color: 'var(--accent-color)' }}>早安，</h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>今天想感受身體的哪部分呢？</p>
+        <div style={{ marginTop: '20px', fontStyle: 'italic', color: 'var(--accent-warm)', borderLeft: '3px solid var(--accent-light)', paddingLeft: '12px', fontSize: '1rem', lineHeight: '1.5' }}>
+          「動作是感覺的基礎，動作可以反映出當下神經系統的狀態」<br />
+          <span style={{ fontSize: '0.85rem', display: 'block', marginTop: '6px' }}>— 摩謝·費登魁斯</span>
+        </div>
       </header>
 
       <div style={{

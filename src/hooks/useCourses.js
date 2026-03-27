@@ -6,7 +6,13 @@ export function useCourses() {
     const saved = localStorage.getItem('awaremove_courses');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsedSaved = JSON.parse(saved);
+        const existingIds = new Set(parsedSaved.map(c => c.id));
+        const missingCategories = initialData.filter(c => !existingIds.has(c.id));
+        if (missingCategories.length > 0) {
+          return [...parsedSaved, ...missingCategories];
+        }
+        return parsedSaved;
       } catch (e) {
         return initialData;
       }
