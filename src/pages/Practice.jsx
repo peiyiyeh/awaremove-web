@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Square, ChevronLeft, Clock, Plus, Trash2, Repeat, Download, Upload, Star } from 'lucide-react';
+import { Play, Square, ChevronLeft, Clock, Plus, Trash2, Repeat, Download, Upload, Star, Edit2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCourses } from '../hooks/useCourses';
 import { useFavorites } from '../hooks/useFavorites';
 
 function Practice() {
-  const { categories, addCourse, deleteCourse, exportCourses, importCourses } = useCourses();
+  const { categories, addCourse, deleteCourse, editCourse, exportCourses, importCourses } = useCourses();
   const { toggleFavorite, isFavorite } = useFavorites();
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [activePart, setActivePart] = useState('part1');
@@ -112,6 +112,52 @@ function Practice() {
   const [newPart1, setNewPart1] = useState('');
   const [newPart2, setNewPart2] = useState('');
 
+  // Accordion State
+  const [expandedCats, setExpandedCats] = useState([]);
+  
+  useEffect(() => {
+    if (categories.length > 0 && expandedCats.length === 0) {
+      setExpandedCats([categories[0].id]);
+    }
+  }, [categories]);
+
+  const toggleCat = (id) => {
+    setExpandedCats(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+  };
+
+  // Edit Course State
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editDuration, setEditDuration] = useState('10 min');
+  const [editPart1, setEditPart1] = useState('');
+  const [editPart2, setEditPart2] = useState('');
+
+  const openEditModal = (categoryId, course, e) => {
+    e.stopPropagation();
+    setEditingCourse({ categoryId, courseId: course.id });
+    setEditTitle(course.title);
+    setEditDesc(course.description);
+    setEditDuration(course.duration || '10 min');
+    setEditPart1(course.parts.part1?.join('\n') || '');
+    setEditPart2(course.parts.part2?.join('\n') || '');
+  };
+
+  const handleEditCourse = () => {
+    if (!editTitle.trim() || !editPart1.trim()) return;
+    const updated = {
+      title: editTitle,
+      description: editDesc,
+      duration: editDuration,
+      parts: {
+        part1: editPart1.split('\n').filter(s => s.trim()),
+        part2: editPart2.split('\n').filter(s => s.trim())
+      }
+    };
+    editCourse(editingCourse.categoryId, editingCourse.courseId, updated);
+    setEditingCourse(null);
+  };
+
   const handleAddCourse = () => {
     if (!newTitle.trim() || !newPart1.trim()) return;
     const course = {
@@ -176,6 +222,45 @@ function Practice() {
     );
   }
 
+  if (editingCourse) {
+    return (
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', paddingBottom: '100px', backgroundColor: 'var(--bg-primary)' }}>
+        <button 
+          onClick={() => setEditingCourse(null)}
+          style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', marginBottom: '24px', marginTop: '10px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+        >
+          <ChevronLeft size={24} /> 取消編輯
+        </button>
+        <h2 style={{ color: 'var(--accent-color)', marginBottom: '24px', fontWeight: '600' }}>編輯練習內容</h2>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>標題</label>
+            <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--accent-light)', marginTop: '4px' }} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>描述</label>
+            <input type="text" value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--accent-light)', marginTop: '4px' }} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Part 1 步驟 (每行一個步驟)</label>
+            <textarea value={editPart1} onChange={e => setEditPart1(e.target.value)} rows={4} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--accent-light)', marginTop: '4px' }} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Part 2 步驟 (每行一個步驟)</label>
+            <textarea value={editPart2} onChange={e => setEditPart2(e.target.value)} rows={4} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--accent-light)', marginTop: '4px' }} />
+          </div>
+          <button 
+            onClick={handleEditCourse}
+            style={{ backgroundColor: 'var(--accent-color)', color: '#fff', padding: '16px', borderRadius: '30px', fontWeight: '500', marginTop: '16px', border: 'none', cursor: 'pointer' }}
+          >
+            保存修改
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!selectedCourse) {
     return (
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', paddingBottom: '100px', position: 'relative' }}>
@@ -209,56 +294,74 @@ function Practice() {
           </div>
         </header>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {categories.map((category) => (
-            <div key={category.id} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>
-                  {category.title}
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--accent-warm)' }}>{category.subtitle}</p>
+            <div key={category.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div 
+                onClick={() => toggleCat(category.id)}
+                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}
+              >
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
+                    {category.title}
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--accent-warm)', margin: 0 }}>{category.subtitle}</p>
+                </div>
+                {expandedCats.includes(category.id) ? <ChevronDown size={20} color="var(--text-secondary)" /> : <ChevronRight size={20} color="var(--text-secondary)" />}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {category.courses.map((course) => (
-                  <div 
-                    key={course.id}
-                    style={{
-                      backgroundColor: '#fff',
-                      padding: '20px',
-                      borderRadius: '16px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                      transition: 'transform 0.2s',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      borderLeft: '4px solid var(--accent-light)',
-                      position: 'relative'
-                    }}
-                  >
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); deleteCourse(category.id, course.id); }}
-                      style={{ position: 'absolute', top: '16px', right: '16px', color: '#ffaaaa', padding: '4px' }}
-                    >
-                      <Trash2 size={18} />
-                    </button>
+              {expandedCats.includes(category.id) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px', paddingLeft: '8px' }}>
+                  {category.courses.map((course) => (
                     <div 
-                      onClick={() => { setSelectedCourse({ ...course, categoryId: category.id }); setActivePart('part1'); }}
-                      style={{ cursor: 'pointer', flex: 1 }}
+                      key={course.id}
+                      style={{
+                        backgroundColor: '#fff',
+                        padding: '20px',
+                        borderRadius: '16px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                        transition: 'transform 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        borderLeft: '4px solid var(--accent-light)',
+                        position: 'relative'
+                      }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '30px' }}>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '500', color: 'var(--text-primary)', margin: 0 }}>{course.title}</h4>
+                      <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px' }}>
+                        <button 
+                          onClick={(e) => openEditModal(category.id, course, e)}
+                          style={{ color: 'var(--text-secondary)', padding: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          title="編輯"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); deleteCourse(category.id, course.id); }}
+                          style={{ color: '#ffaaaa', padding: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          title="刪除"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px' }}>
-                        <Clock size={14} /><span>{course.duration}</span>
+                      <div 
+                        onClick={() => { setSelectedCourse({ ...course, categoryId: category.id }); setActivePart('part1'); }}
+                        style={{ cursor: 'pointer', flex: 1 }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '60px' }}>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: '500', color: 'var(--text-primary)', margin: 0 }}>{course.title}</h4>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px' }}>
+                          <Clock size={14} /><span>{course.duration}</span>
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginTop: '8px' }}>
+                          {course.description}
+                        </p>
                       </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginTop: '8px' }}>
-                        {course.description}
-                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

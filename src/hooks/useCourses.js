@@ -43,6 +43,18 @@ export function useCourses() {
     }));
   };
 
+  const editCourse = (categoryId, courseId, updatedCourse) => {
+    setCategories(prev => prev.map(cat => {
+      if (cat.id === categoryId) {
+        return {
+          ...cat,
+          courses: cat.courses.map(c => c.id === courseId ? { ...c, ...updatedCourse } : c)
+        };
+      }
+      return cat;
+    }));
+  };
+
   const exportCourses = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(categories));
     const downloadAnchorNode = document.createElement('a');
@@ -75,5 +87,5 @@ export function useCourses() {
     event.target.value = null;
   };
 
-  return { categories, addCourse, deleteCourse, exportCourses, importCourses };
+  return { categories, addCourse, deleteCourse, editCourse, exportCourses, importCourses };
 }
